@@ -27,6 +27,7 @@ class KairoEngine:
     def __init__(self):
         self.variables = {}
         self.outputs = []
+        self.output_names = set()
 
     def run_file(self, file_path, function_name="index"):
         if not os.path.exists(file_path):
@@ -86,6 +87,11 @@ class KairoEngine:
             if assignment_match:
                 var_name, func_name, args_str = assignment_match.groups()
                 
+                # すでに手動で定義済みの入力値は初期化(0)で上書きしないようにガード
+                if func_name == "inname" and var_name in self.variables:
+                    i += 1
+                    continue
+
                 if func_name in current_module:
                     func_obj = current_module[func_name]
                 else:
@@ -110,10 +116,9 @@ class KairoEngine:
                 self.variables[var_name] = result_node
 
                 if func_name == "outname":
-                    self.outputs.append(result_node)
+                    # 表示名義の重複を防ぐ
+                    if result_node.name not in self.output_names:
+                        self.outputs.append(result_node)
+                        self.output_names.add(result_node.name)
 
             i += 1
-
-def run_file(file_path, function_name="index"):
-    engine = KairoEngine()
-    engine.run_file(file_path, function_name)
